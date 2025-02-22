@@ -4,12 +4,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,10 +32,12 @@ import com.jbubb.shoppingapp.model.Product
 @Composable
 fun LandscapeView(products: List<Product>) {
     var selectedProduct by remember { mutableStateOf<Product?>(null) } // keep track of which product is selected
+    var state = rememberLazyListState()
     Row { // row of two columns. one is the list of products and one is the details for one product
         // column for the list
         LazyColumn(
-            modifier = Modifier.fillMaxWidth(0.4f).background(Color.Magenta)
+            modifier = Modifier.fillMaxWidth(0.4f).background(Color.Magenta),
+            state = state
         ) {
             items(products) { product -> // display the text of each item in a box
                 Box(
@@ -39,16 +45,32 @@ fun LandscapeView(products: List<Product>) {
                         .fillMaxWidth()
                         .background(if (product == selectedProduct) Color.White else Color(210, 210, 210)) // make all gray except the selected one
                         .clickable {
-                            selectedProduct = product
+                            selectedProduct = product // select the product when clicked
                         },
                     contentAlignment = Alignment.BottomStart
                 ) {
                     Text(product.name, fontSize = 24.sp, modifier = Modifier.padding(30.dp)) // product name
                     if (product == selectedProduct) {
-                        Box(modifier = Modifier.fillMaxWidth().height(5.dp).background(Color.Blue))
+                        Box(modifier = Modifier.fillMaxWidth().height(5.dp).background(Color.Blue)) // put a blue line under the selected product
                     }
                 }
 
+            }
+        }
+        // an area to display the product details
+        if (selectedProduct == null) { // if nothing is selected display a message
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxHeight().fillMaxWidth()
+            ) {
+                Text("Select a product to see its details.", fontSize = 24.sp)
+            }
+        } else {
+            // if a product is selected show its details
+            Column(modifier = Modifier.padding(start = 15.dp)) {
+                Text(selectedProduct!!.name, fontSize = 50.sp, modifier = Modifier.padding(vertical = 10.dp)) // title
+                Text("$${selectedProduct!!.price}", fontSize = 40.sp, color = Color(39, 82, 41), modifier = Modifier.padding(bottom = 25.dp)) // price
+                Text(selectedProduct!!.description, fontSize = 30.sp)
             }
         }
     }
