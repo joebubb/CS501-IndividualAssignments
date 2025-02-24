@@ -3,6 +3,7 @@ package com.jbubb.hangman.composables
 import android.content.res.Configuration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,8 +21,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,19 +32,51 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jbubb.hangman.R
+import java.util.Locale
 import kotlin.math.min
 
 @Composable
-fun Hangman() {
+fun HangmanApp() {
+    val words = listOf(
+        "APPLE", "BANANA", "CHERRY", "DRAGONFRUIT", "ELDERBERRY",
+        "FIG", "GRAPE", "HONEYDEW", "KIWI", "LEMON",
+        "MANGO", "NECTARINE", "ORANGE", "PAPAYA", "QUINCE",
+        "RASPBERRY", "STRAWBERRY", "TANGERINE", "UGLI", "VANILLA",
+        "WATERMELON", "XIGUA", "YAM", "ZUCCHINI", "APRICOT",
+        "BLUEBERRY", "CANTALOUPE", "DATE", "GRAPEFRUIT", "PEAR"
+    ) // define words
+    var chosenWord by rememberSaveable { mutableStateOf(words.random()) } // start by choosing one random word
+    var livesLost by rememberSaveable { mutableIntStateOf(0) } // start with lives at 0
+    var guessed by rememberSaveable { mutableStateOf(setOf<Char>()) } // no guessed characters
 
+    val guessChar = { c: Char ->
+        guessed += setOf(c)
+        if (c !in chosenWord) {
+            livesLost += 1
+        }
+    }
+
+    val newGame = {
+        guessed = setOf()
+        chosenWord = words.random()
+        livesLost = 0
+    }
+
+    HangmanAppSmall(
+        chosenWord = chosenWord,
+        guessed = guessed,
+        livesLost = 0,
+        guessChar = guessChar
+    )
 }
 
 @Composable
-fun Letters(removed: Set<Char>, buttonWidth: Int, buttonHeight: Int, rowSize: Int, fontSize: Int) {
+fun Letters(removed: Set<Char>, buttonWidth: Int, buttonHeight: Int, rowSize: Int, fontSize: Int, callback: (Char) -> Unit) {
     // can dynamically render the letters in different ways
     val letters = ('A'..'Z').toList()
     // split the list up into a 2d list
@@ -61,13 +96,16 @@ fun Letters(removed: Set<Char>, buttonWidth: Int, buttonHeight: Int, rowSize: In
                                 modifier = Modifier
                                     .width(buttonWidth.dp)
                                     .height(buttonHeight.dp) // style the box based on the input to the function
-                                    .clip(RoundedCornerShape(8.dp))
+                                    .clip(RoundedCornerShape(16.dp))
                                     .background(
                                         if (removed.contains(c))
-                                            Color.Gray
+                                            Color.Gray.copy(alpha = 0.2f)
                                         else
                                             Color.Blue
-                                    ),
+                                    )
+                                    .clickable {
+                                        callback(c)
+                                    },
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(c.toString(), fontSize = fontSize.sp, color = Color.White)
@@ -135,27 +173,18 @@ fun HangmanImage(livesLost: Int) {
 }
 
 @Composable
-fun HangmanAppSmall() {
-    val words = listOf(
-        "apple", "banana", "cherry", "dragonfruit", "elderberry",
-        "fig", "grape", "honeydew", "kiwi", "lemon",
-        "mango", "nectarine", "orange", "papaya", "quince",
-        "raspberry", "strawberry", "tangerine", "ugli", "vanilla",
-        "watermelon", "xigua", "yam", "zucchini", "apricot",
-        "blueberry", "cantaloupe", "date", "grapefruit", "pear"
-    ) // define words
-    var chosenWord by remember { mutableStateOf(words.random()) } // start by choosing one random word
-
+fun HangmanAppSmall(chosenWord: String, guessed: Set<Char>, livesLost: Int, guessChar: (Char) -> Unit) {
     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        HangmanImage(livesLost = 6)
-        WordView("CATS", setOf('C', 'T', 'H'))
+        HangmanImage(livesLost = livesLost)
+        WordView(chosenWord, guessed)
         Text("Choose a Letter", fontSize = 40.sp)
         Letters(
-            removed = setOf('A', 'J'),
+            removed = guessed,
             buttonWidth = 70,
             buttonHeight = 60,
             rowSize = 4,
-            fontSize = 40
+            fontSize = 40,
+            callback = guessChar
         )
     }
 }
@@ -163,16 +192,4 @@ fun HangmanAppSmall() {
 @Preview(device = "spec:parent=pixel_5,orientation=landscape")
 @Composable
 fun LetterMenuPreview() {
-    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        HangmanImage(livesLost = 6)
-        WordView("CATS", setOf('C', 'T', 'H'))
-        Text("Choose a Letter", fontSize = 40.sp)
-        Letters(
-            removed = setOf('A', 'J'),
-            buttonWidth = 70,
-            buttonHeight = 60,
-            rowSize = 4,
-            fontSize = 40
-        )
-    }
 }
