@@ -103,7 +103,7 @@ class HangmanModel {
             else -> 1
         }
 
-        return hintCost + livesLost < maxLives
+        return hintCost + livesLost < maxLives && hintsGiven < 3
     }
 
     fun giveHint(): HangmanModel {
@@ -163,6 +163,10 @@ class HangmanModel {
                 return  createNewModel(word, guesses, livesLost, hintsGiven) // should never happen
             }
         }
+    }
+
+    fun shouldShowHintMessage(): Boolean {
+        return displayHintMessage
     }
 
     fun gameWon(): Boolean {

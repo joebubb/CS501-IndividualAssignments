@@ -41,21 +41,59 @@ import kotlin.math.min
 fun HangmanApp(context: Context) {
     var state by rememberSaveable(saver = HangmanModel.Saver) { mutableStateOf(HangmanModel().reset()) }
 
-    HangmanAppSmall(
-        chosenWord = state.getWord(),
-        guessed = state.getGuesses(),
-        livesLost = state.getLivesLost(),
-        guessChar = { c: Char ->
-            if (state.gameWon()) { // if the game is won
-                Toast.makeText(context, "You have won. Reset to continue", Toast.LENGTH_LONG).show()
-            } else if (!state.gameIsLost()) { // if the game is not lost yet
-                state = state.guess(c)
-            } else { // game is already lost
-                Toast.makeText(context, "You have lost. Reset to continue", Toast.LENGTH_LONG).show()
-            }
-        },
-        restart = { state = state.reset() }
-    )
+    if (state.gameWon()) {
+        Toast.makeText(context, "You have won. Reset to continue", Toast.LENGTH_LONG).show()
+    }
+
+    val configuration = LocalConfiguration.current
+    val isTabletLandscape = configuration.screenWidthDp >= 840
+    val isPortraitMode = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+
+    if (isTabletLandscape && !isPortraitMode) {
+        // For tablets in landscape mode
+        HangmanAppLarge(
+            chosenWord = state.getWord(),
+            guessed = state.getGuesses(),
+            livesLost = state.getLivesLost(),
+            guessChar = { c: Char ->
+                if (state.gameWon()) {
+                    Toast.makeText(context, "You have won. Reset to continue", Toast.LENGTH_LONG).show()
+                } else if (!state.gameIsLost()) {
+                    state = state.guess(c)
+                } else {
+                    Toast.makeText(context, "You have lost. Reset to continue", Toast.LENGTH_LONG).show()
+                }
+            },
+            restart = { state = state.reset() },
+            canGiveHint = state.canGiveHint(),
+            doHint = {
+                if (!state.canGiveHint()) {
+                    Toast.makeText(context, "You cannot use any more hints", Toast.LENGTH_LONG).show()
+                } else {
+                    state = state.giveHint()
+                }
+            },
+            hint = state.hintMessage(),
+            showHint = state.shouldShowHintMessage()
+        )
+    } else {
+        // For phones or tablets in portrait mode
+        HangmanAppSmall(
+            chosenWord = state.getWord(),
+            guessed = state.getGuesses(),
+            livesLost = state.getLivesLost(),
+            guessChar = { c: Char ->
+                if (state.gameWon()) {
+                    Toast.makeText(context, "You have won. Reset to continue", Toast.LENGTH_LONG).show()
+                } else if (!state.gameIsLost()) {
+                    state = state.guess(c)
+                } else {
+                    Toast.makeText(context, "You have lost. Reset to continue", Toast.LENGTH_LONG).show()
+                }
+            },
+            restart = { state = state.reset() }
+        )
+    }
 }
 
 @Composable
@@ -111,7 +149,11 @@ fun Letters(removed: Set<Char>, buttonWidth: Int, buttonHeight: Int, rowSize: In
 @Composable
 fun WordView(word: String, removed: Set<Char>) {
     val width = LocalConfiguration.current.screenWidthDp
-    val columnWidth = ((width.toDouble() * 0.5)  / word.length).toInt()
+    val columnWidth =
+        if (width < 840)
+            ((width.toDouble() / 2)  / word.length).toInt()
+        else
+            ((width.toDouble() / 2 / 2)  / word.length).toInt()
 
     Row(modifier = Modifier.fillMaxWidth(0.7f), horizontalArrangement = Arrangement.SpaceAround) {
         word.forEach { c ->
@@ -175,7 +217,49 @@ fun HangmanAppSmall(chosenWord: String, guessed: Set<Char>, livesLost: Int, gues
 }
 
 @Composable
-fun HangmanAppLarge(chosenWord: String, guessed: Set<Char>, livesLost: Int, guessChar: (Char) -> Unit, restart: () -> Unit) {
+fun HangmanAppLarge(chosenWord: String, guessed: Set<Char>, livesLost: Int, guessChar: (Char) -> Unit, restart: () -> Unit, canGiveHint: Boolean, doHint: () -> Unit, hint: String, showHint: Boolean) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.fillMaxWidth(0.95f)) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Choose a Letter", fontSize = 40.sp)
+                Letters(
+                    removed = guessed,
+                    buttonWidth = 100,
+                    buttonHeight = 100,
+                    rowSize = 6,
+                    fontSize = 40,
+                    callback = guessChar
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Box(
+                    modifier = Modifier
+                        .height(80.dp)
+                        .width(200.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(if (canGiveHint) Color.Blue else Color.Gray.copy(alpha = 0.2f))
+                        .clickable {
+                            doHint()
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Hint", fontSize = 30.sp, color = Color.White)
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                if (showHint) {
+                    Text("Hint: $hint", fontSize = 40.sp)
+                }
+            }
+
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                HangmanImage(livesLost)
+                WordView(chosenWord, guessed)
+                Spacer(modifier = Modifier.height(32.dp))
+                RestartButton(80, 200, restart)
+            }
+        }
+    }
 
 }
 
@@ -194,10 +278,4 @@ fun RestartButton(height: Int, width: Int, restart: () -> Unit) {
     ) {
         Text("RESTART", fontSize = 24.sp, color = Color.White)
     }
-}
-
-@Preview(device = "spec:parent=pixel_5,orientation=landscape")
-@Composable
-fun LetterMenuPreview() {
-    HangmanApp(context = LocalContext.current)
 }
