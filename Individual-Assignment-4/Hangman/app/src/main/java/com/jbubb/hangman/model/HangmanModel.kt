@@ -164,17 +164,20 @@ class HangmanModel {
             }
         }
     }
+
+    fun gameWon(): Boolean {
+        word.forEach {
+            if (it !in guesses) {
+                return false
+            }
+        }
+        return true
+    }
+
     operator fun getValue(thisRef: Any?, property: KProperty<*>): HangmanModel {
         return this
     }
 
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: HangmanModel) {
-        word = value.word
-        guesses = value.guesses
-        livesLost = value.livesLost
-        hintsGiven = value.hintsGiven
-        displayHintMessage = value.displayHintMessage
-    }
 
     companion object {
         val Saver: Saver<MutableState<HangmanModel>, List<Any>> = Saver(

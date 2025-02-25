@@ -45,7 +45,15 @@ fun HangmanApp(context: Context) {
         chosenWord = state.getWord(),
         guessed = state.getGuesses(),
         livesLost = state.getLivesLost(),
-        guessChar = { c: Char -> state = state.guess(c) }, 
+        guessChar = { c: Char ->
+            if (state.gameWon()) { // if the game is won
+                Toast.makeText(context, "You have won. Reset to continue", Toast.LENGTH_LONG).show()
+            } else if (!state.gameIsLost()) { // if the game is not lost yet
+                state = state.guess(c)
+            } else { // game is already lost
+                Toast.makeText(context, "You have lost. Reset to continue", Toast.LENGTH_LONG).show()
+            }
+        },
         restart = { state = state.reset() }
     )
 }
@@ -164,6 +172,11 @@ fun HangmanAppSmall(chosenWord: String, guessed: Set<Char>, livesLost: Int, gues
         Spacer(modifier = Modifier.height(4.dp))
         RestartButton(60, 120, restart)
     }
+}
+
+@Composable
+fun HangmanAppLarge(chosenWord: String, guessed: Set<Char>, livesLost: Int, guessChar: (Char) -> Unit, restart: () -> Unit) {
+
 }
 
 @Composable
