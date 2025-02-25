@@ -1,10 +1,11 @@
 package com.jbubb.hangman.composables
 
+import android.content.Context
 import android.content.res.Configuration
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,18 +13,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -31,47 +28,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jbubb.hangman.R
-import java.util.Locale
+import com.jbubb.hangman.model.HangmanModel
 import kotlin.math.min
 
 @Composable
-fun HangmanApp() {
-    val words = listOf(
-        "APPLE", "BANANA", "CHERRY", "DRAGONFRUIT", "ELDERBERRY",
-        "FIG", "GRAPE", "HONEYDEW", "KIWI", "LEMON",
-        "MANGO", "NECTARINE", "ORANGE", "PAPAYA", "QUINCE",
-        "RASPBERRY", "STRAWBERRY", "TANGERINE", "UGLI", "VANILLA",
-        "WATERMELON", "XIGUA", "YAM", "ZUCCHINI", "APRICOT",
-        "BLUEBERRY", "CANTALOUPE", "DATE", "GRAPEFRUIT", "PEAR"
-    ) // define words
-    var chosenWord by rememberSaveable { mutableStateOf(words.random()) } // start by choosing one random word
-    var livesLost by rememberSaveable { mutableIntStateOf(0) } // start with lives at 0
-    var guessed by rememberSaveable { mutableStateOf(setOf<Char>()) } // no guessed characters
-
-    val guessChar = { c: Char ->
-        guessed += setOf(c)
-        if (c !in chosenWord) {
-            livesLost += 1
-        }
-    }
-
-    val newGame = {
-        guessed = setOf()
-        chosenWord = words.random()
-        livesLost = 0
-    }
+fun HangmanApp(context: Context) {
+    var state by rememberSaveable(saver = HangmanModel.Saver) { mutableStateOf(HangmanModel().reset()) }
 
     HangmanAppSmall(
-        chosenWord = chosenWord,
-        guessed = guessed,
-        livesLost = 0,
-        guessChar = guessChar
+        chosenWord = state.getWord(),
+        guessed = state.getGuesses(),
+        livesLost = state.getLivesLost(),
+        guessChar = { c: Char -> state = state.guess(c) },  // ✅ Directly reassign state
+        restart = { state = state.reset() }                 // ✅ Directly reassign state
     )
 }
 
@@ -145,9 +120,9 @@ fun WordView(word: String, removed: Set<Char>) {
                 )
                 Box(
                     modifier = Modifier
-                    .fillMaxWidth()
-                    .height(4.dp)
-                    .background(Color.Black)
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .background(Color.Black)
                 )
             }
         }
@@ -164,7 +139,7 @@ fun HangmanImage(livesLost: Int) {
         4 -> R.drawable.hangman4
         5 -> R.drawable.hangman5
         6 -> R.drawable.hangman6
-        else -> R.drawable.hangman5half
+        else -> R.drawable.hangman6
     }
     Image(
         painter = painterResource(image),
@@ -173,7 +148,7 @@ fun HangmanImage(livesLost: Int) {
 }
 
 @Composable
-fun HangmanAppSmall(chosenWord: String, guessed: Set<Char>, livesLost: Int, guessChar: (Char) -> Unit) {
+fun HangmanAppSmall(chosenWord: String, guessed: Set<Char>, livesLost: Int, guessChar: (Char) -> Unit, restart: () -> Unit) {
     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         HangmanImage(livesLost = livesLost)
         WordView(chosenWord, guessed)
@@ -182,14 +157,34 @@ fun HangmanAppSmall(chosenWord: String, guessed: Set<Char>, livesLost: Int, gues
             removed = guessed,
             buttonWidth = 70,
             buttonHeight = 60,
-            rowSize = 4,
+            rowSize = 5,
             fontSize = 40,
             callback = guessChar
         )
+        Spacer(modifier = Modifier.height(4.dp))
+        RestartButton(60, 120, restart)
+    }
+}
+
+@Composable
+fun RestartButton(height: Int, width: Int, restart: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .height(height.dp)
+            .width(width.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color.Red)
+            .clickable {
+                restart()
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Text("RESTART", fontSize = 24.sp, color = Color.White)
     }
 }
 
 @Preview(device = "spec:parent=pixel_5,orientation=landscape")
 @Composable
 fun LetterMenuPreview() {
+    HangmanApp(context = LocalContext.current)
 }
