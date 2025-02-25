@@ -45,8 +45,8 @@ fun HangmanApp(context: Context) {
         chosenWord = state.getWord(),
         guessed = state.getGuesses(),
         livesLost = state.getLivesLost(),
-        guessChar = { c: Char -> state = state.guess(c) },  // ✅ Directly reassign state
-        restart = { state = state.reset() }                 // ✅ Directly reassign state
+        guessChar = { c: Char -> state = state.guess(c) }, 
+        restart = { state = state.reset() }
     )
 }
 
