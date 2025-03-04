@@ -29,10 +29,10 @@ import kotlin.math.log10
 class MainActivity : ComponentActivity() {
 
     private var isRecording by mutableStateOf(false)
-    private var soundLevel by mutableStateOf(0f)
+    private var soundLevel by mutableFloatStateOf(0f)
     private lateinit var audioRecord: AudioRecord
     private var bufferSize = 0
-    private var threshold by mutableStateOf(85f) // default threshold
+    private var threshold by mutableFloatStateOf(85f) // default threshold
 
     // request permission
     private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
