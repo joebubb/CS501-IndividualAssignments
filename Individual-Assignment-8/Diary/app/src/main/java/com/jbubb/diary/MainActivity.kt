@@ -94,7 +94,7 @@ fun DiaryScreen() {
             OutlinedTextField(
                 value = diaryEntryText,
                 onValueChange = { diaryEntryText = it },
-                label = { Text("Write your thoughts...") },
+                label = { Text("Write here") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),

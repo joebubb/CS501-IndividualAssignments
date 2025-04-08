@@ -23,20 +23,18 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            ToDoAppTheme {
-                val context = LocalContext.current
-                val viewModel: TaskViewModel = viewModel(
-                    factory = ViewModelProvider.AndroidViewModelFactory.getInstance(
-                        context.applicationContext as Application
-                    )
+            val context = LocalContext.current
+            val viewModel: TaskViewModel = viewModel(
+                factory = ViewModelProvider.AndroidViewModelFactory.getInstance(
+                    context.applicationContext as Application
                 )
-                TaskScreen(viewModel = viewModel)
-            }
+            )
+            TaskScreen(viewModel = viewModel)
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class) // needed for the top app bar
 @Composable
 fun TaskScreen(viewModel: TaskViewModel) {
     val tasks by viewModel.tasks.collectAsState()
@@ -165,12 +163,4 @@ fun TaskItem(
             Icon(Icons.Default.Delete, contentDescription = "Delete Task")
         }
     }
-}
-
-@Composable
-fun ToDoAppTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = lightColorScheme(),
-        content = content
-    )
 }
