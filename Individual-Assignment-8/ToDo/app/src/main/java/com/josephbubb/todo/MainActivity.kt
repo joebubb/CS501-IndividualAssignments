@@ -1,4 +1,4 @@
-package com.josephbubb.todo
+ package com.josephbubb.todo
 
 import android.app.Application
 import android.os.Bundle
@@ -18,13 +18,12 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-// Import your Task, TaskViewModel, FilterType etc. if they are in different packages
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            ToDoAppTheme { // Replace with your actual theme name if different
+            ToDoAppTheme {
                 val context = LocalContext.current
                 val viewModel: TaskViewModel = viewModel(
                     factory = ViewModelProvider.AndroidViewModelFactory.getInstance(
@@ -40,23 +39,21 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskScreen(viewModel: TaskViewModel) {
-    // Observe the list of tasks and the current filter state from the ViewModel
     val tasks by viewModel.tasks.collectAsState()
     val currentFilter by viewModel.filterState.collectAsState()
 
-    // State for the input field
     var taskDescription by remember { mutableStateOf("") }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Simple To-Do List") }) }
+        topBar = { TopAppBar(title = { Text("ToDo List") }) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .padding(paddingValues)
-                .padding(16.dp) // Add padding around the content
+                .padding(16.dp)
                 .fillMaxSize()
         ) {
-            // Input Row
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -64,17 +61,17 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 OutlinedTextField(
                     value = taskDescription,
                     onValueChange = { taskDescription = it },
-                    label = { Text("New Task Description") },
-                    modifier = Modifier.weight(1f), // Take available space
+                    label = { Text("New Task") },
+                    modifier = Modifier.weight(1f),
                     singleLine = true
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(
                     onClick = {
                         viewModel.addTask(taskDescription)
-                        taskDescription = "" // Clear input after adding
+                        taskDescription = ""
                     },
-                    enabled = taskDescription.isNotBlank() // Enable only if text is entered
+                    enabled = taskDescription.isNotBlank()
                 ) {
                     Text("Add")
                 }
@@ -82,10 +79,9 @@ fun TaskScreen(viewModel: TaskViewModel) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Filter Buttons Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly // Distribute buttons
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 FilterButton("All", currentFilter == FilterType.ALL) {
                     viewModel.setFilter(FilterType.ALL)
@@ -99,10 +95,9 @@ fun TaskScreen(viewModel: TaskViewModel) {
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider() // Visual separator
+            HorizontalDivider()
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Task List
             if (tasks.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("No tasks ${
@@ -115,7 +110,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 }
             } else {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(tasks, key = { it.id }) { task -> // Use task ID as key for performance
+                    items(tasks, key = { it.id }) { task ->
                         TaskItem(
                             task = task,
                             onToggleComplete = { viewModel.toggleCompletion(task) },
@@ -161,7 +156,7 @@ fun TaskItem(
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = task.description,
-            modifier = Modifier.weight(1f), // Take available space
+            modifier = Modifier.weight(1f),
             textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
             color = if (task.isCompleted) MaterialTheme.colorScheme.outline else LocalContentColor.current
         )
@@ -172,12 +167,10 @@ fun TaskItem(
     }
 }
 
-// Remember to define your Theme (e.g., ToDoAppTheme) similar to the examples
 @Composable
 fun ToDoAppTheme(content: @Composable () -> Unit) {
-    // Basic Material 3 theme setup, adapt as needed from RoomCRUD/other examples
     MaterialTheme(
-        colorScheme = lightColorScheme(), // Or use darkColorScheme(), dynamic schemes etc.
+        colorScheme = lightColorScheme(),
         content = content
     )
 }

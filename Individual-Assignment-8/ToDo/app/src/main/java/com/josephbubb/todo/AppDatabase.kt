@@ -5,9 +5,9 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [Task::class], version = 1, exportSchema = false) // Added exportSchema = false for simplicity
+@Database(entities = [Task::class], version = 1, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun taskDao(): TaskDao // Provide the DAO
+    abstract fun taskDao(): TaskDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
@@ -17,9 +17,8 @@ abstract class AppDatabase : RoomDatabase() {
                 Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "task_database" // Database file name
+                    "task_database"
                 )
-                    // .fallbackToDestructiveMigration() // Optional: Add if you change schema later without migration
                     .build()
                     .also { INSTANCE = it }
             }
